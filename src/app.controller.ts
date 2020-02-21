@@ -24,23 +24,27 @@ export class AppController {
   /**
    * Search the Google Autocomplete API
    * @param {String} s - The search term to pass as the input to google
-   * @param {String} l - The location to search within. This location is passed to Google' geocode API to get a lat,lng to use in the autocomplete API 
+   * @param {String} l [undefined] - The location to search within. This location is passed to Google' geocode API to get a lat,lng to use in the autocomplete API. If not provided, search within the US.
    */
   @Get('google-doctors')
   async getTest(@Query('s') s: string, @Query('l') l: string): Promise<any> {
     const GOOGLE_API_KEY = this.configService.get<string>('GOOGLE_API_KEY');
-    console.log('/// GOOGLE_API_KEY', GOOGLE_API_KEY);
-    console.log('/// process.env', process.env);
 
     try {
-      // TODO: Handle Non 200 Case && Refactor to separate method
-      const locationResults = await axios.get(`${geocodeBaseUrl}${l}&key=${GOOGLE_API_KEY}`);
-      console.log('/// locationResults', locationResults.data.error_message);
-      const { lat, lng } = locationResults.data.results[0].geometry.location;
-      const response = await axios.get(`${baseUrl}&input=${s}&key=${GOOGLE_API_KEY}&location=${lat},${lng}&language=en&types=establishment&radius=20000`)
+      
+      // If no location is provided, search within the US
+      let locationSearch = '&components=country:us';
+      if (l != null)  {
+        // TODO: Handle Non 200 Case && Refactor to separate method
+        const locationResults = await axios.get(`${geocodeBaseUrl}${l}&key=${GOOGLE_API_KEY}`);
+        const { lat, lng } = locationResults.data.results[0].geometry.location;
+        locationSearch = `&location=${lat},${lng}`;
+      }
+      
+      const response = await axios.get(`${baseUrl}&input=${s}&key=${GOOGLE_API_KEY}${locationSearch}&language=en&types=establishment&radius=20000`)
 
       if (response.status === 200) {
-        return response.data;
+        return response.data.predictions.filter(result => result.types.includes('doctor') || result.types.includes('dentist') || result.types.includes('health') || result.types.includes('veterinary_care') || result.types.includes('physiotherapist'));
       } else {
         // handle error state
         console.log(Object.keys(response))
@@ -72,10 +76,16 @@ export class AppController {
     }
   }
 
+  /**
+   * Query the Ribbon API for Doctors
+   * @param {String} s - Search Term
+   * @param {String} l [undefined] - Location. If not provided, search within the US  
+   */
   @Get('ribbon-search')
-  async getRibbonDoctors(@Query('q') q: string): Promise<any> {
+  async getRibbonDoctors(@Query('s') s: string, @Query('l') l: string): Promise<any> {
     const RIBBON_API_KEY = this.configService.get<string>('RIBBON_API_KEY');
-    const ribbonUrl = `${ribbonBaseUrl}?name=${q}`;
+    const searchLocation = l != null ? `address=${l}` : '';
+    const ribbonUrl = `${ribbonBaseUrl}?name=${s}${searchLocation}`;
 
     try {
       const results = await axios({
