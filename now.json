@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "name": "doctor-search-api",
+  "builds": [
+    {
+      "src": "dist/main.js",
+      "use": "@now/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "dist/main.js"
+    }
+  ],
+  "env": {
+    "GOOGLE_API_KEY": "@google_api_key"
+  }
+}
