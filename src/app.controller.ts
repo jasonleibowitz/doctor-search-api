@@ -84,7 +84,7 @@ export class AppController {
   @Get('ribbon-search')
   async getRibbonDoctors(@Query('s') s: string, @Query('l') l: string): Promise<any> {
     const RIBBON_API_KEY = this.configService.get<string>('RIBBON_API_KEY');
-    const searchLocation = l != null ? `address=${l}` : '';
+    const searchLocation = l != null ? `&address=${l}` : '';
     const ribbonUrl = `${ribbonBaseUrl}?name=${s}${searchLocation}`;
 
     try {

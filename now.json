@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "doctor-search-api",
   "builds": [{
     "src": "dist/main.js",
     "use": "@now/node"
